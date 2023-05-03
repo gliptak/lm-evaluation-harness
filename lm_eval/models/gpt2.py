@@ -66,10 +66,10 @@ class HFLM(BaseLM):
             ], self.tokenizer.encode("hello\n\nhello")
 
         # setup for automatic batch size detection
-        if batch_size == 'auto': 
+        if batch_size == 'auto':
             self.batch_size_per_gpu = batch_size
         else:
-            self.batch_size_per_gpu = int(batch_size) 
+            self.batch_size_per_gpu = int(batch_size)
 
     @property
     def eot_token_id(self):

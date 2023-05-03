@@ -187,20 +187,20 @@ class BaseLM(LM):
 
     def loglikelihood_rolling(self, requests):
         # TODO: Implement caching once we've confirmed the perplexity implementation
-        
+
         # automatic batch size detection for vectorization
         adaptive_batch_size = None
-        if self.batch_size == 'auto': 
+        if self.batch_size == 'auto':
             # using rolling window with maximum context
             print('Passed argument batch_size = auto. Detecting largest batch size')
             @find_executable_batch_size(starting_batch_size=512) # if OOM, then halves batch_size and tries again
             def forward_batch(batch_size):
                 test_batch = torch.ones((batch_size, self.max_length), device=self.device).long()
-                for _ in range(5): 
+                for _ in range(5):
                     out = F.log_softmax(self._model_call(test_batch), dim = -1).cpu()
                 return batch_size
-            
-            batch_size = forward_batch() 
+
+            batch_size = forward_batch()
             print(f"Determined Largest batch size: {batch_size}")
             adaptive_batch_size = batch_size
 
@@ -249,7 +249,6 @@ class BaseLM(LM):
             toks = x[1] + x[2]
             return -len(toks), tuple(toks)
 
-        
         re_ord = utils.Reorderer(requests, _collate)
 
         # automatic (variable) batch size detection for vectorization
@@ -257,20 +256,19 @@ class BaseLM(LM):
         _, context_enc, continuation_enc = re_ord.get_reordered()[0]
         max_context = len((context_enc + continuation_enc)[-(self.max_length + 1) :][:-1])
         if (self.batch_size == 'auto'):
-            
             if override_bs is None:
                 print('Passed argument batch_size = auto. Detecting largest batch size')
                 @find_executable_batch_size(starting_batch_size=512) # if OOM, then halves batch_size and tries again
                 def forward_batch(batch_size):
                     test_batch = torch.ones((batch_size, max_context), device=self.device).long()
-                    for _ in range(5): 
+                    for _ in range(5):
                         out = F.log_softmax(self._model_call(test_batch), dim = -1).cpu()
                     return batch_size
-                
-                batch_size = forward_batch() 
+
+                batch_size = forward_batch()
                 print(f"Determined largest batch size: {batch_size}")
                 adaptive_batch_size = batch_size
-                
+
             else:
                 adaptive_batch_size = override_bs
 

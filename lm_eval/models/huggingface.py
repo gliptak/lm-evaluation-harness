@@ -159,10 +159,10 @@ class HuggingFaceAutoLM(BaseLM):
             ), "Evaluating causal models with `add_special_tokens=True` is currently not supported."
 
         # setup for automatic batch size detection
-        if batch_size == 'auto': 
+        if batch_size == 'auto':
             self._batch_size = batch_size
         else:
-            self._batch_size = int(batch_size) 
+            self._batch_size = int(batch_size)
 
         self._max_gen_toks = max_gen_toks
         self._max_length = max_length
@@ -373,22 +373,22 @@ class HuggingFaceAutoLM(BaseLM):
         def _collate(x):
             tokens = self.tok_encode(x[0])
             return len(tokens), x[0]
-        
+
         results = []
         reorder = utils.Reorderer(requests, _collate)
-        
+
         adaptive_batch_size = None
-        if self.batch_size == 'auto': 
+        if self.batch_size == 'auto':
             # using rolling window with maximum context
             print('Passed argument batch_size = auto. Detecting largest batch size')
             @find_executable_batch_size(starting_batch_size=512) # if OOM, then halves batch_size and tries again
             def forward_batch(batch_size):
                 test_batch = torch.ones((batch_size, self.max_length), device=self.device).long()
-                for _ in range(5): 
+                for _ in range(5):
                     out = F.log_softmax(self._model_call(test_batch), dim = -1).cpu()
                 return batch_size
 
-            batch_size = forward_batch() 
+            batch_size = forward_batch()
             print(f"Determined Largest batch size: {batch_size}")
             adaptive_batch_size = batch_size
 
@@ -405,7 +405,7 @@ class HuggingFaceAutoLM(BaseLM):
                 isinstance(max_generation_length, int) or max_generation_length is None
             )
             assert isinstance(stop_sequences, list) or stop_sequences is None
-            
+
             # TODO: Find a better way to handle stop sequences for 0-shot.
             if stop_sequences is None:
                 until = [self.eot_token]
